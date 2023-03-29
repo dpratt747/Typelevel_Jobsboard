@@ -20,7 +20,11 @@ object JobId {
   @throws[IllegalArgumentException]
   def apply(uuid: UUID): JobId = apply(uuid.toString)
 
-  extension (j: JobId) def value: String = j
+  extension (j: JobId) {
+    def value: String = j
+    def uuid: UUID = UUID.fromString(j.value)
+  }
+    
 
   given Encoder[JobId] = Encoder[String].contramap(_.value)
 

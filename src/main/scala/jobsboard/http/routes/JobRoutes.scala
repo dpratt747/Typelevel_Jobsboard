@@ -20,62 +20,58 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.collection.mutable
 import jobsboard.logging.*
 
+import com.github.dpratt747.jobsboard.core.program.{JobsProgram, JobsProgramAlg}
+
 trait JobRoutesAlg[F[_]] {
   def routes: HttpRoutes[F]
 }
 
-final case class JobRoutes[F[_] : Concurrent: Logger] private() extends JobRoutesAlg[F] with Http4sDsl[F] {
+final case class JobRoutes[F[_] : Concurrent : Logger] private(
+                                                                private val jobsProgram: JobsProgramAlg[F]
+                                                              ) extends JobRoutesAlg[F] with Http4sDsl[F] {
 
-  private val database: mutable.Map[JobId, Job] = mutable.Map[JobId, Job]()
 
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] { case POST -> Root =>
-    Ok(database.values)
+    Logger[F].info("Getting all jobs") *> jobsProgram.getAll().flatMap(Ok(_))
   }
 
   private val findJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / UUIDVar(id) =>
-    database.get(JobId(id)) match {
-      case Some(job) => Ok(job)
-      case None => NotFound(FailureResponse(s"Job with id: $id not found"))
-    }
+    Logger[F].info(s"Getting job with id: $id") *>
+      jobsProgram.findByJobId(JobId(id)).flatMap {
+        case Some(job) => Ok(job)
+        case None => NotFound(FailureResponse(s"Job with id: $id not found"))
+      }
   }
-
-  private def createJob(jobInfo: JobInfo): F[Job] =
-    Job(
-      id = JobId(java.util.UUID.randomUUID()),
-      date = System.currentTimeMillis(),
-      ownerEmail = Email("todo@gmail.com"),
-      jobInfo = jobInfo
-    ).pure[F]
 
   private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req@POST -> Root / "create" =>
     for {
       _ <- Logger[F].info(s"Attempting to create job")
-      jobInfo <- req.as[JobInfo].logError(e => s"Parsing failed: ${e.getMessage}")  // poor error response like this
+      jobInfo <- req.as[JobInfo].logError(e => s"Parsing failed: ${e.getMessage}") // poor error response like this
       _ <- Logger[F].info(s"Parsed request body, Job info: $jobInfo")
-      job <- createJob(jobInfo)
-      _ <- database.put(job.id, job).pure[F]
-      _ <- Logger[F].info(s"Created job: $job")
-      resp <- Created(job.id)
+      id <- jobsProgram.insertJob(Email("todo@mail.com"), jobInfo)
+      resp <- Created(id)
     } yield resp
   }
 
   private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ PUT -> Root / "update" / UUIDVar(id) =>
-      database.get(JobId(id)) match {
-        case Some(job) =>
-          for {
-            ji <- req.as[JobInfo]
-            updatedJob = job.copy(jobInfo = ji)
-            _ <- database.put(updatedJob.id, updatedJob).pure[F]
-            resp <- Ok(updatedJob)
-          } yield resp
-        case None => NotFound(FailureResponse(s"Job with id: $id not found. Cannot update"))
-      }
+    case req@PUT -> Root / "update" / UUIDVar(id) =>
+      for {
+        _ <- Logger[F].info(s"Attempting to update job")
+        ji <- req.as[JobInfo]
+        _ <- Logger[F].info(s"Parsed request body, Job info: $ji")
+        job <- jobsProgram.updateJob(JobId(id), ji)
+        res <- job match {
+          case Some(job) => Ok(job)
+          case None => NotFound(FailureResponse(s"Job with id: $id not found. Cannot update"))
+        }
+      } yield res
   }
 
   private val deleteJobRoute: HttpRoutes[F] = HttpRoutes.of[F] { case DELETE -> Root / UUIDVar(id) =>
-    database.remove(JobId(id)) match {
-      case Some(_) => Ok()
+    val jobId = JobId(id)
+    Logger[F].info(s"Attempting to delete job with id: $id") *>
+    jobsProgram.findByJobId(jobId).flatMap {
+      case Some(_) => jobsProgram.delete(jobId).flatMap(Ok(_))
       case None => NotFound(FailureResponse(s"Job with id: $id not found. Cannot delete"))
     }
   }
@@ -87,6 +83,6 @@ final case class JobRoutes[F[_] : Concurrent: Logger] private() extends JobRoute
 }
 
 object JobRoutes {
-  def make[F[_] : Concurrent: Logger](): JobRoutesAlg[F] = JobRoutes[F]()
+  def make[F[_] : Concurrent : Monad : Logger](jobsProgram: JobsProgramAlg[F]): F[JobRoutesAlg[F]] = JobRoutes[F](jobsProgram).pure[F]
 
 }

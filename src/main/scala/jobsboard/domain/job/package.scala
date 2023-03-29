@@ -50,23 +50,6 @@ package object job {
 
   object JobInfo {
 
-        def empty: JobInfo = JobInfo(
-          company = CompanyName(""),
-          title = Title(""),
-          description = Description(""),
-          externalUrl = URL(""),
-          remote = false,
-          location = Location(""),
-          salaryLo = None,
-          salaryHi = None,
-          currency = None,
-          country = None,
-          tags = None,
-          image = None,
-          seniority = None,
-          other = None
-        )
-
         def minimal(company: CompanyName, title: Title, description: Description, externalUrl: URL, remote: Boolean, location: Location): JobInfo = JobInfo(
           company = company,
           title = title,

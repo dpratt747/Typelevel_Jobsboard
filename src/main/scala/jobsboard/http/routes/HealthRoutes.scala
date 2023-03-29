@@ -2,6 +2,7 @@ package com.github.dpratt747
 package jobsboard.http.routes
 
 import cats.*
+import cats.implicits.*
 import cats.effect.*
 import org.http4s.*
 import org.http4s.dsl.Http4sDsl
@@ -25,5 +26,5 @@ final case class HealthRoutes[F[_] : Concurrent: Logger] private() extends Healt
 }
 
 object HealthRoutes {
-  def make[F[_] : Concurrent: Logger](): HealthRoutesAlg[F] = HealthRoutes[F]()
+  def make[F[_] : Concurrent: Monad: Logger](): F[HealthRoutesAlg[F]] = HealthRoutes[F]().pure[F]
 }

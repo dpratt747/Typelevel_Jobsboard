@@ -1,9 +1,10 @@
 package com.github.dpratt747
 package playground
 
+import jobsboard.core.repository.JobsRepository
+import jobsboard.domain.job.*
+
 import cats.effect.*
-import com.github.dpratt747.jobsboard.core.repository.JobsRepository
-import com.github.dpratt747.jobsboard.domain.job.*
 import doobie.hikari.HikariTransactor
 import doobie.util.*
 
@@ -33,6 +34,10 @@ object JobsPlayground extends IOApp.Simple {
     for {
       repo <- JobsRepository.make[IO](xa)
       id <- repo.createJob(Email("dpratt747@gmail.com"), jobInfo)
+      id2 <-repo.createJob(Email("anotheremail@valid.com"), jobInfo)
+      _ <- repo.find(id).map(println)
+      _ <-repo.all().map(println)
+      _ <- repo.delete(id)
     } yield ()
   }
 
