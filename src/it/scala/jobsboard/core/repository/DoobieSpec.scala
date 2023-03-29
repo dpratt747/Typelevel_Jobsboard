@@ -12,9 +12,10 @@ trait DoobieSpec {
 
   val initScript: String
 
-  val postgresResource: Resource[IO, PostgreSQLContainer[Nothing]] = {
+  def postgresResource: Resource[IO, PostgreSQLContainer[Nothing]] = {
     val acquire = {
-      val container: PostgreSQLContainer[Nothing] = new PostgreSQLContainer("postgres:latest").withInitScript("sql/init.sql")
+      val container: PostgreSQLContainer[Nothing] = new PostgreSQLContainer("postgres")
+        .withInitScript(initScript)
       IO{
         container.start()
         container
@@ -24,7 +25,7 @@ trait DoobieSpec {
     Resource.make(acquire)(release)
   }
 
-  val rollbackTransactor: Resource[IO, Transactor[IO]] = for {
+  def transactor: Resource[IO, Transactor[IO]] = for {
     container <- postgresResource
     ec <- ExecutionContexts.fixedThreadPool[IO](1)
     trans <- HikariTransactor.newHikariTransactor[IO](
@@ -34,6 +35,6 @@ trait DoobieSpec {
       container.getPassword,
       ec
     )
-  } yield Transactor.after.set(trans, HC.rollback)
+  } yield trans
 
 }

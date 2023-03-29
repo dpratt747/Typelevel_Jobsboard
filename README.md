@@ -17,6 +17,11 @@ sbt "runMain com.github.dpratt747.playground.JobsPlayground"
 ```bash
 sbt 'testOnly *JobRoutesSpec -- -z "<test name>"'
 ```
+
+**To continuously compile the integration tests:**
+```bash
+sbt "~IntegrationTest/compile" 
+```
 ---
 
 ## Endpoints:

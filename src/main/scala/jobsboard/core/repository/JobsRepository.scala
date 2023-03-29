@@ -88,9 +88,6 @@ final case class JobsRepository[F[_]: MonadCancelThrow] private(
          |  seniority = ${jobInfo.seniority},
          |  other = ${jobInfo.other}
          |WHERE id = $jobId
-         |RETURNING
-         |  id, date, owner_email, company, title, description, external_url, remote, location, currency, salary_lo,
-         |  salary_hi, country, tags, image, seniority, other, active
          |""".stripMargin
       .update
       .run
