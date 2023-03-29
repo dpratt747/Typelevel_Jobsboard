@@ -25,7 +25,7 @@ object Application extends IOApp.Simple {
 
   private val transactor: Resource[IO, (HikariTransactor[IO], ApplicationConfig)] = for {
     config <- Resource.eval(ConfigSource.default.loadF[IO, ApplicationConfig])
-    ec <- ExecutionContexts.fixedThreadPool[IO](32)
+    ec <- ExecutionContexts.fixedThreadPool[IO](config.postgresConfig.numberOfThreads)
     trans <- HikariTransactor.newHikariTransactor[IO](
       config.postgresConfig.driver,
       config.postgresConfig.url,

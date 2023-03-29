@@ -22,16 +22,16 @@ object Dependencies {
   ) ++ testDependencies
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
-    "org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test,
-    "org.typelevel" %% "log4cats-noop" % log4catsVersion % Test,
-    "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-    "org.scalactic" %% "scalactic" % scalaTestVersion % Test,
-    "org.typelevel" %% "cats-effect-testing-scalatest" % scalaTestCatsEffectVersion % Test,
-    "org.testcontainers" % "testcontainers" % testContainerVersion % Test,
-    "org.testcontainers" % "postgresql" % testContainerVersion % Test,
-    "ch.qos.logback" % "logback-classic" % logbackVersion % Test,
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
-    "org.scalatestplus" %% "scalacheck-1-17" % scalaTestPlustVersion % Test
+    "org.tpolecat" %% "doobie-scalatest" % doobieVersion % "it,test",
+    "org.typelevel" %% "log4cats-noop" % log4catsVersion % "it,test",
+    "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test",
+    "org.scalactic" %% "scalactic" % scalaTestVersion % "it,test",
+    "org.typelevel" %% "cats-effect-testing-scalatest" % scalaTestCatsEffectVersion % "it,test",
+    "org.testcontainers" % "testcontainers" % testContainerVersion % "it,test",
+    "org.testcontainers" % "postgresql" % testContainerVersion % "it,test",
+    "ch.qos.logback" % "logback-classic" % logbackVersion % "it,test",
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % "it,test",
+    "org.scalatestplus" %% "scalacheck-1-17" % scalaTestPlustVersion % "it,test"
   )
 
 }
