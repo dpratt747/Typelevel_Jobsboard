@@ -42,6 +42,8 @@ trait JobGenerators {
 
   val tagsGen: Gen[List[Tags]] = Gen.listOf(nonEmptyStringGen.map(Tags(_)))
 
+  val nonEmptyTagsList: Gen[List[Tags]] = Gen.nonEmptyListOf(nonEmptyStringGen.map(Tags(_)))
+  
   val imageGen: Gen[Image] = nonEmptyStringGen.map(Image(_))
 
   val seniorityGen: Gen[Seniority] = nonEmptyStringGen.map(Seniority(_))

@@ -50,21 +50,31 @@ package object job {
 
   object JobInfo {
 
-        def minimal(company: CompanyName, title: Title, description: Description, externalUrl: URL, remote: Boolean, location: Location): JobInfo = JobInfo(
-          company = company,
-          title = title,
-          description = description,
-          externalUrl = externalUrl,
-          remote = remote,
-          location = location,
-          salaryLo = None,
-          salaryHi = None,
-          currency = None,
-          country = None,
-          tags = None,
-          image = None,
-          seniority = None,
-          other = None
-        )
+    def minimal(company: CompanyName, title: Title, description: Description, externalUrl: URL, remote: Boolean, location: Location): JobInfo = JobInfo(
+      company = company,
+      title = title,
+      description = description,
+      externalUrl = externalUrl,
+      remote = remote,
+      location = location,
+      salaryLo = None,
+      salaryHi = None,
+      currency = None,
+      country = None,
+      tags = None,
+      image = None,
+      seniority = None,
+      other = None
+    )
   }
+
+  final case class JobFilter(
+                              companies: Option[List[CompanyName]] = None,
+                              locations: Option[List[Location]] = None,
+                              countries: Option[List[Country]] = None,
+                              seniorities: Option[List[Seniority]] = None,
+                              tags: Option[List[Tags]] = None,
+                              maxSalary: Option[SalaryHigh] = None,
+                              remote: Option[Boolean] = None
+                            )
 }

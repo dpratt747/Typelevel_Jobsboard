@@ -4,7 +4,8 @@ package jobsboard.core.repository
 import jobsboard.domain.job.Country.Country
 import jobsboard.domain.job.Email.Email
 import jobsboard.domain.job.JobId.JobId
-import jobsboard.domain.job.{Job, JobInfo}
+import jobsboard.domain.job.CompanyName.*
+import jobsboard.domain.job.*
 
 import doobie.*
 import doobie.implicits.*
@@ -12,11 +13,17 @@ import doobie.postgres.implicits.*
 import cats.Applicative
 import cats.effect.kernel.MonadCancelThrow
 import cats.implicits.*
+import org.typelevel.log4cats.Logger
+import jobsboard.domain.pagination.*
+import jobsboard.logging.*
+
 
 trait JobsRepositoryAlg[F[_]] {
   def createJob(ownerEmail: Email, jobInfo: JobInfo): F[JobId]
 
   def all(): F[List[Job]]
+
+  def all(filter: JobFilter, pagination: Pagination): F[List[Job]]
 
   def find(jobId: JobId): F[Option[Job]]
 
@@ -25,9 +32,9 @@ trait JobsRepositoryAlg[F[_]] {
   def delete(jobId: JobId): F[Int]
 }
 
-final case class JobsRepository[F[_]: MonadCancelThrow] private(
-                                               private val xa: Transactor[F]
-                                             ) extends JobsRepositoryAlg[F] {
+final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
+                                                                  private val xa: Transactor[F]
+                                                                ) extends JobsRepositoryAlg[F] {
   override def createJob(ownerEmail: Email, jobInfo: JobInfo): F[JobId] =
     sql"""
          |INSERT INTO jobs (
@@ -55,6 +62,41 @@ final case class JobsRepository[F[_]: MonadCancelThrow] private(
       .query[Job]
       .to[List]
       .transact(xa)
+
+  override def all(filter: JobFilter, pagination: Pagination): F[List[Job]] = {
+    val selectFragment: Fragment =
+      fr"""
+          |SELECT
+          |  id, date, owner_email, company, title, description, external_url, remote, location, currency, salary_lo,
+          |  salary_hi, country, tags, image, seniority, other, active
+          |"""
+        .stripMargin
+
+    val fromFragment: Fragment = fr"FROM jobs"
+
+    val whereFragment: Fragment = Fragments.whereAndOpt(
+      filter.companies.flatMap(_.toNel).map(list => Fragments.in(fr"company", list)),
+      filter.locations.flatMap(_.toNel).map(list => Fragments.in(fr"location", list)),
+      filter.tags.flatMap(_.toNel).map(list =>
+        Fragments.or(list.map(tag => fr"$tag = any(tags)").toList: _*)
+      ),
+      filter.countries.flatMap(_.toNel).map(list => Fragments.in(fr"country", list)),
+      filter.seniorities.flatMap(_.toNel).map(list => Fragments.in(fr"seniority", list)),
+      filter.maxSalary.map(salaryHigh => fr"salary_hi > $salaryHigh"),
+      filter.remote.map(remote => fr"remote = $remote")
+    )
+
+    val paginationFragment = fr"ORDER BY id LIMIT ${pagination.limit} OFFSET ${pagination.offset}"
+
+    val statement = selectFragment |+| fromFragment |+| whereFragment |+| paginationFragment
+
+    Logger[F].info(statement.toString) *>
+    statement
+      .query[Job]
+      .to[List]
+      .transact(xa)
+      .logError(e => s"Failed to get jobs: ${e.getMessage}")
+  }
 
   override def find(jobId: JobId): F[Option[Job]] =
     sql"""
@@ -96,9 +138,9 @@ final case class JobsRepository[F[_]: MonadCancelThrow] private(
 
   override def delete(jobId: JobId): F[Int] =
     sql"""
-          |DELETE FROM jobs
-          |WHERE id = $jobId
-          |"""
+         |DELETE FROM jobs
+         |WHERE id = $jobId
+         |"""
       .stripMargin
       .update
       .run
@@ -106,5 +148,5 @@ final case class JobsRepository[F[_]: MonadCancelThrow] private(
 }
 
 object JobsRepository {
-  def make[F[_] : MonadCancelThrow](xa: Transactor[F]): F[JobsRepositoryAlg[F]] = JobsRepository[F](xa).pure[F]
+  def make[F[_] : MonadCancelThrow: Logger](xa: Transactor[F]): F[JobsRepositoryAlg[F]] = JobsRepository[F](xa).pure[F]
 }

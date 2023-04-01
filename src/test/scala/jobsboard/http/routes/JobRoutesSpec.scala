@@ -2,15 +2,16 @@ package com.github.dpratt747
 package jobsboard.http.routes
 
 import jobsboard.core.program.JobsProgramAlg
+import jobsboard.domain.job.*
 import jobsboard.domain.job.Email.Email
 import jobsboard.domain.job.JobId.JobId
-import jobsboard.domain.job.*
+import jobsboard.domain.pagination.*
 import jobsboard.fixtures.JobGenerators
 import jobsboard.http.routes.JobRoutes
 
 import cats.effect.*
-import cats.effect.unsafe.implicits.global
 import cats.effect.testing.scalatest.AsyncIOSpec
+import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import io.circe.generic.auto.*
 import org.http4s.Request
@@ -35,7 +36,9 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
         val jobsService = new JobsProgramAlg[IO] {
           def insertJob(ownerEmail: Email, jobsInfo: JobInfo): IO[JobId] = ???
 
-          def getAll(): IO[List[Job]] = List(job).pure[IO]
+          def getAll(): IO[List[Job]] = ???
+
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = List(job).pure[IO]
 
           def findByJobId(jobId: JobId): IO[Option[Job]] = ???
 
@@ -46,7 +49,7 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
 
         (for {
           jobRoutes <- JobRoutes.make[IO](jobsService)
-          request = Request[IO](method = POST, uri = uri"/jobs")
+          request = Request[IO](method = POST, uri = uri"/jobs").withEntity(JobFilter())
           response <- jobRoutes.routes.orNotFound.run(request)
           body <- response.as[List[Job]]
         } yield {
@@ -61,6 +64,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
           def insertJob(ownerEmail: Email, jobsInfo: JobInfo): IO[JobId] = ???
 
           def getAll(): IO[List[Job]] = ???
+
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
 
           def findByJobId(jobId: JobId): IO[Option[Job]] = job.some.pure[IO]
 
@@ -87,6 +92,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
 
           def getAll(): IO[List[Job]] = ???
 
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
+
           def findByJobId(jobId: JobId): IO[Option[Job]] = None.pure[IO]
 
           def updateJob(jobId: JobId, jobInfo: JobInfo): IO[Option[Job]] = ???
@@ -109,6 +116,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
           def insertJob(ownerEmail: Email, jobsInfo: JobInfo): IO[JobId] = jobId.pure[IO]
 
           def getAll(): IO[List[Job]] = ???
+
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
 
           def findByJobId(jobId: JobId): IO[Option[Job]] = ???
 
@@ -135,6 +144,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
 
           def getAll(): IO[List[Job]] = ???
 
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
+
           def findByJobId(jobId: JobId): IO[Option[Job]] = ???
 
           def updateJob(jobId: JobId, jobInfo: JobInfo): IO[Option[Job]] = job.some.pure[IO]
@@ -160,6 +171,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
 
           def getAll(): IO[List[Job]] = ???
 
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
+
           def findByJobId(jobId: JobId): IO[Option[Job]] = ???
 
           def updateJob(jobId: JobId, jobInfo: JobInfo): IO[Option[Job]] = None.pure[IO]
@@ -183,6 +196,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
 
           def getAll(): IO[List[Job]] = ???
 
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
+
           def findByJobId(jobId: JobId): IO[Option[Job]] = job.some.pure[IO]
 
           def updateJob(jobId: JobId, jobInfo: JobInfo): IO[Option[Job]] = ???
@@ -205,6 +220,8 @@ class JobRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with Job
           def insertJob(ownerEmail: Email, jobsInfo: JobInfo): IO[JobId] = ???
 
           def getAll(): IO[List[Job]] = ???
+
+          def getAll(filter: JobFilter, pagination: Pagination): IO[List[Job]] = ???
 
           def findByJobId(jobId: JobId): IO[Option[Job]] = None.pure[IO]
 

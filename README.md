@@ -13,6 +13,11 @@ sbt "runMain com.github.dpratt747.jobsboard.Application"
 sbt "runMain com.github.dpratt747.playground.JobsPlayground"
 ```
 
+**To run the integration tests:**
+```bash 
+sbt "IntegrationTest/test"
+```
+
 **To run a specific test:**
 ```bash
 sbt 'testOnly *JobRoutesSpec -- -z "<test name>"'

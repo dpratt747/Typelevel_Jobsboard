@@ -5,13 +5,16 @@ import jobsboard.core.repository.JobsRepositoryAlg
 import jobsboard.domain.job.*
 import jobsboard.domain.job.Email.*
 import jobsboard.domain.job.JobId.*
+import jobsboard.domain.pagination.Pagination
 
-import cats.{Applicative, Monad}
 import cats.implicits.*
+import cats.{Applicative, Monad}
 import org.typelevel.log4cats.Logger
 
 trait JobsProgramAlg[F[_]] {
   def insertJob(ownerEmail: Email, jobsInfo: JobInfo): F[JobId]
+
+  def getAll(filter: JobFilter, pagination: Pagination): F[List[Job]]
 
   def getAll(): F[List[Job]]
 
@@ -30,6 +33,13 @@ final case class JobsProgram[F[_] : Logger : Monad] private(
       _ <- Logger[F].info(s"Attempting to create job")
       jobId <- jobsRepositoryAlg.createJob(ownerEmail, jobsInfo)
     } yield jobId
+
+  override def getAll(filter: JobFilter, pagination: Pagination): F[List[Job]] = {
+    for {
+      _ <- Logger[F].info(s"Attempting to get all jobs")
+      jobs <- jobsRepositoryAlg.all(filter, pagination)
+    } yield jobs
+  }
 
   override def getAll(): F[List[Job]] =
     for {
