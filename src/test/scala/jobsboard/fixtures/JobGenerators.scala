@@ -15,6 +15,7 @@ import jobsboard.domain.job.Tags.Tags
 import jobsboard.domain.job.Title.Title
 import jobsboard.domain.job.URL.URL
 
+import com.github.dpratt747.jobsboard.domain.job.Email.Email
 import org.scalacheck.Gen
 
 trait JobGenerators {
@@ -50,6 +51,8 @@ trait JobGenerators {
 
   val otherGen: Gen[Other] = nonEmptyStringGen.map(Other(_))
 
+  val emailGen: Gen[Email] = Gen.oneOf(Seq(Email("somemail@mail.com"), Email("live@mail.com")))
+  
   val jobInfoGen: Gen[JobInfo] =
     for {
       company <- companyNameGen
@@ -86,7 +89,7 @@ trait JobGenerators {
     for {
       jobId <- jobIdGen
       date <- Gen.long
-      email <- Gen.const(Email("somemail@mail.com"))
+      email <- emailGen
       jobInfo <- jobInfoGen
       active <- Gen.prob(0.5)
     } yield Job(
