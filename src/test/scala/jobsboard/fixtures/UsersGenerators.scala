@@ -21,23 +21,32 @@ import org.scalacheck.Gen
 import tsec.passwordhashers.jca.BCrypt
 
 trait UsersGenerators extends JobGenerators {
+
+  val passwordGen = nonEmptyStringGen.map(Password(_))
+
+  val firstNameGen = nonEmptyStringGen.map(FirstName(_))
+
+  val lastNameGen = nonEmptyStringGen.map(LastName(_))
+
+  val roleGen = Gen.oneOf(Role.values)
+
   val usersGeneratorsWithPass: Gen[(User, Password)] = for {
     email <- emailGen
-    password <- nonEmptyStringGen.map(Password(_))
+    password <- passwordGen
     hashedPassword = Password(BCrypt.hashpwUnsafe(password.value))
-    firstName <- Gen.option(nonEmptyStringGen.map(FirstName(_)))
-    lastName <- Gen.option(nonEmptyStringGen.map(LastName(_)))
+    firstName <- Gen.option(firstNameGen)
+    lastName <- Gen.option(lastNameGen)
     company <- Gen.option(companyNameGen)
-    role <- Gen.oneOf(Role.values)
+    role <- roleGen
   } yield (User(email, hashedPassword, firstName, lastName, company, role), password)
 
   val usersGenerators: Gen[User] = for {
     email <- emailGen
-    password <- nonEmptyStringGen.map(Password(_))
+    password <- passwordGen
     hashedPassword = Password(BCrypt.hashpwUnsafe(password.value))
-    firstName <- Gen.option(nonEmptyStringGen.map(FirstName(_)))
-    lastName <- Gen.option(nonEmptyStringGen.map(LastName(_)))
+    firstName <- Gen.option(firstNameGen)
+    lastName <- Gen.option(lastNameGen)
     company <- Gen.option(companyNameGen)
-    role <- Gen.oneOf(Role.values)
+    role <- roleGen
   } yield User(email, hashedPassword, firstName, lastName, company, role)
 }
