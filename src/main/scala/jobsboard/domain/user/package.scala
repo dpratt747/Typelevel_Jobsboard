@@ -1,16 +1,18 @@
 package com.github.dpratt747
 package jobsboard.domain
 
+import jobsboard.domain.job.CompanyName.CompanyName
 import jobsboard.domain.job.Email.Email
-
-import com.github.dpratt747.jobsboard.domain.job.CompanyName.CompanyName
+import jobsboard.domain.job.FirstName.FirstName
+import jobsboard.domain.job.LastName.LastName
+import jobsboard.domain.job.Password.Password
 
 package object user {
   final case class User(
                          email: Email,
-                         hashedPassword: String,
-                         firstName: Option[String],
-                         lastName: Option[String],
+                         hashedPassword: Password,
+                         firstName: Option[FirstName],
+                         lastName: Option[LastName],
                          company: Option[CompanyName],
                          role: Role
                        )

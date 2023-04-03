@@ -16,14 +16,27 @@ import jobsboard.domain.job.Title.Title
 import jobsboard.domain.job.URL.URL
 import jobsboard.domain.user.*
 
+import com.github.dpratt747.jobsboard.domain.job.Password.Password
 import org.scalacheck.Gen
+import tsec.passwordhashers.jca.BCrypt
 
 trait UsersGenerators extends JobGenerators {
-  val usersGenerators = for {
+  val usersGeneratorsWithPass: Gen[(User, Password)] = for {
     email <- emailGen
-    hashedPassword <- Gen.alphaStr
-    firstName <- Gen.option(Gen.alphaStr)
-    lastName <- Gen.option(Gen.alphaStr)
+    password <- nonEmptyStringGen.map(Password(_))
+    hashedPassword = Password(BCrypt.hashpwUnsafe(password.value))
+    firstName <- Gen.option(nonEmptyStringGen.map(FirstName(_)))
+    lastName <- Gen.option(nonEmptyStringGen.map(LastName(_)))
+    company <- Gen.option(companyNameGen)
+    role <- Gen.oneOf(Role.values)
+  } yield (User(email, hashedPassword, firstName, lastName, company, role), password)
+
+  val usersGenerators: Gen[User] = for {
+    email <- emailGen
+    password <- nonEmptyStringGen.map(Password(_))
+    hashedPassword = Password(BCrypt.hashpwUnsafe(password.value))
+    firstName <- Gen.option(nonEmptyStringGen.map(FirstName(_)))
+    lastName <- Gen.option(nonEmptyStringGen.map(LastName(_)))
     company <- Gen.option(companyNameGen)
     role <- Gen.oneOf(Role.values)
   } yield User(email, hashedPassword, firstName, lastName, company, role)
