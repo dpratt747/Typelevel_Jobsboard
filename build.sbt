@@ -9,6 +9,7 @@ lazy val root = (project in file("."))
     name := "typelevel-jobboard",
     idePackagePrefix.withRank(KeyRanks.Invisible) := Some("com.github.dpratt747"),
     libraryDependencies := Dependencies.all,
+    IntegrationTest / testForkedParallel := true,
     IntegrationTest / dependencyClasspath := (IntegrationTest / dependencyClasspath).value
       ++ (Test / exportedProducts).value
   )

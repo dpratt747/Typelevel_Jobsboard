@@ -21,6 +21,8 @@ object Email {
 
   opaque type Email = String :| ValidEmail
 
+  def unapply(email: String): Option[Email] = email.refineOption[ValidEmail]
+
   @throws[IllegalArgumentException]
   def apply(value: String): Email = value.refine
 

@@ -14,9 +14,11 @@ trait HealthRoutesAlg[F[_]] {
   def routes: HttpRoutes[F]
 }
 
-final case class HealthRoutes[F[_] : Concurrent: Logger] private() extends HealthRoutesAlg[F] with Http4sDsl[F]{
+final case class HealthRoutes[F[_] : Concurrent : Logger] private() extends HealthRoutesAlg[F] with Http4sDsl[F] {
   private def healthRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root => Ok("Ok")
+    case GET -> Root =>
+      Logger[F].info("Health check") *>
+        Ok("Ok")
   }
 
   override def routes: HttpRoutes[F] = Router(
@@ -26,5 +28,5 @@ final case class HealthRoutes[F[_] : Concurrent: Logger] private() extends Healt
 }
 
 object HealthRoutes {
-  def make[F[_] : Concurrent: Monad: Logger](): F[HealthRoutesAlg[F]] = HealthRoutes[F]().pure[F]
+  def make[F[_] : Concurrent : Monad : Logger](): F[HealthRoutesAlg[F]] = HealthRoutes[F]().pure[F]
 }

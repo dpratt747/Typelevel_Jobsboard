@@ -31,7 +31,7 @@ object Dependencies {
     "org.testcontainers" % "postgresql" % testContainerVersion % "it,test",
     "ch.qos.logback" % "logback-classic" % logbackVersion % "it,test",
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % "it,test",
-    "org.scalatestplus" %% "scalacheck-1-17" % scalaTestPlustVersion % "it,test"
+    "org.scalatestplus" %% "scalacheck-1-17" % scalaTestPlusVersion % "it,test"
   )
 
 }

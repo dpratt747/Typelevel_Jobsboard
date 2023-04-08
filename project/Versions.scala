@@ -16,5 +16,5 @@ object Versions {
   lazy val slf4jVersion = "2.0.5"
   lazy val javaMailVersion = "1.6.2"
   lazy val scalacheckVersion = "1.17.0"
-  lazy val scalaTestPlustVersion = "3.2.15.0"
+  lazy val scalaTestPlusVersion = "3.2.15.0"
 }

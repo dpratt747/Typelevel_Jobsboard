@@ -6,7 +6,9 @@ import jobsboard.http.routes.*
 import cats.*
 import cats.implicits.*
 import cats.effect.*
-import com.github.dpratt747.jobsboard.core.program.{JobsProgram, JobsProgramAlg}
+import com.github.dpratt747.jobsboard.config.ApplicationConfig
+import com.github.dpratt747.jobsboard.core.program.{AuthProgramAlg, JobsProgram, JobsProgramAlg}
+import com.github.dpratt747.jobsboard.domain.security.Authenticator
 import org.http4s.*
 import org.http4s.dsl.*
 import org.http4s.server.*
@@ -17,18 +19,25 @@ trait HttpApiAlg[F[_]] {
 }
 
 final case class HttpApi[F[_] : Concurrent : Logger] private(
-                                                              private val jobsProgram: JobsProgramAlg[F]
+                                                              private val jobsProgram: JobsProgramAlg[F],
+                                                              private val authProgram: AuthProgramAlg[F],
+                                                              private val authenticator: Authenticator[F]
                                                             ) extends HttpApiAlg[F] {
 
   override def routes: F[HttpRoutes[F]] = for {
     healthRoutes <- HealthRoutes.make[F]()
+    authRoutes <- AuthRoutes.make[F](authProgram, authenticator)
     jobRoutes <- JobRoutes.make[F](jobsProgram)
   } yield Router(
-    "/api" -> (healthRoutes.routes <+> jobRoutes.routes)
+    "/api" -> (healthRoutes.routes <+> jobRoutes.routes <+> authRoutes.routes)
   )
 
 }
 
 object HttpApi {
-  def make[F[_] : Concurrent : Logger](jobsProgram: JobsProgramAlg[F]): F[HttpApiAlg[F]] = HttpApi[F](jobsProgram).pure[F]
+  def make[F[_] : Concurrent : Logger](
+                                        jobsProgram: JobsProgramAlg[F],
+                                        authProgram: AuthProgramAlg[F],
+                                        authenticator: Authenticator[F]
+                                      ): F[HttpApiAlg[F]] = HttpApi[F](jobsProgram, authProgram, authenticator).pure[F]
 }

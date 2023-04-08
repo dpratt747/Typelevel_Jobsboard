@@ -2,11 +2,15 @@ package com.github.dpratt747
 package jobsboard
 
 import jobsboard.config.*
-import jobsboard.core.program.JobsProgram
-import jobsboard.core.repository.JobsRepository
+import jobsboard.core.program.{AuthProgram, JobsProgram}
+import jobsboard.core.repository.{JobsRepository, UsersRepository}
+import jobsboard.domain.job.Email.Email
+import jobsboard.domain.security.Authenticator
+import jobsboard.domain.user.User
 import jobsboard.http.HttpApi
 import jobsboard.http.routes.HealthRoutes
 
+import cats.data.OptionT
 import cats.effect.*
 import cats.implicits.*
 import doobie.hikari.*
@@ -17,13 +21,15 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException
+import tsec.authentication.{IdentityStore, JWTAuthenticator}
+import tsec.mac.jca.HMACSHA256
 
 
 object Application extends IOApp.Simple {
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  private val transactor: Resource[IO, (HikariTransactor[IO], ApplicationConfig)] = for {
+  private val transactorWithConfig: Resource[IO, (HikariTransactor[IO], ApplicationConfig)] = for {
     config <- Resource.eval(ConfigSource.default.loadF[IO, ApplicationConfig])
     ec <- ExecutionContexts.fixedThreadPool[IO](config.postgresConfig.numberOfThreads)
     trans <- HikariTransactor.newHikariTransactor[IO](
@@ -35,12 +41,14 @@ object Application extends IOApp.Simple {
     )
   } yield (trans, config)
   
-  override def run: IO[Unit] = {
-    transactor.use { (xa, config) =>
+  override def run: IO[Unit] =
+    transactorWithConfig.use { (xa, config) =>
       for {
         jobsRepo <- JobsRepository.make[IO](xa)
         jobsProgram <- JobsProgram.make[IO](jobsRepo)
-        httpApp <- HttpApi.make[IO](jobsProgram)
+        userRepo <- UsersRepository.make[IO](xa)
+        authProgram <- AuthProgram.make[IO](userRepo, config)
+        httpApp <- HttpApi.make[IO](jobsProgram, authProgram, authProgram.authenticator)
         routes <- httpApp.routes
         server <- EmberServerBuilder.default[IO]
           .withHost(config.emberConfig.host)
@@ -50,6 +58,5 @@ object Application extends IOApp.Simple {
           .use(_ => Logger[IO].info("Started server") *> IO.never)
       } yield server
     }
-  }
 
 }

@@ -6,13 +6,15 @@ import jobsboard.domain.auth.NewPasswordInfo
 import jobsboard.domain.job.Email.Email
 import jobsboard.domain.job.Password
 import jobsboard.domain.job.Password.Password
-import jobsboard.domain.user.{Role, User}
+import jobsboard.domain.user.{NewUserInfo, Role, User}
 import jobsboard.fixtures.UsersGenerators
 
 import cats.data.OptionT
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
+import com.comcast.ip4s.*
+import com.github.dpratt747.jobsboard.config.{ApplicationConfig, EmberConfig, PostgresConfig, SecurityConfig}
 import org.scalatest.{EitherValues, OptionValues}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,6 +32,12 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
+  val mockConfig: ApplicationConfig = ApplicationConfig(
+    SecurityConfig("secret", 1.day),
+    EmberConfig(Host.fromString("0.0.0.0").get, Port.fromInt(4200).get),
+    PostgresConfig(1, "org.postgresql.Driver", "jdbc:postgresql://localhost:5432/board", "docker", "docker")
+  )
+
   describe("AuthProgram") {
     it("should return None when user is not found") {
       forAll(usersGeneratorsWithPass) { case (user: User, pw: Password) =>
@@ -43,21 +51,8 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.none[IO, User]
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
           login <- program.login(user.email, user.hashedPassword)
         } yield {
           login shouldBe None
@@ -78,21 +73,8 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.none[IO, User]
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
           pw <- BCrypt.hashpw[IO](user.hashedPassword.value).map(_.toString)
           login <- program.login(user.email, Password(pw))
         } yield {
@@ -112,21 +94,8 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.some[IO](user)
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
           login <- program.login(user.email, pw)
         } yield {
           login shouldBe a[Some[Any]]
@@ -145,22 +114,9 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.none[IO, User]
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
-          signup <- program.signUp(user.email, user.hashedPassword, user.firstName, user.lastName, user.company)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
+          signup <- program.signUp(NewUserInfo(user.email, user.hashedPassword, user.firstName, user.lastName, user.company))
         } yield {
           signup shouldBe a[None.type]
         }).unsafeRunSync()
@@ -178,22 +134,9 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.none[IO, User]
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
-          signup <- program.signUp(user.email, password, user.firstName, user.lastName, user.company)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
+          signup <- program.signUp(NewUserInfo(user.email, password, user.firstName, user.lastName, user.company))
           pwBool <- BCrypt.checkpwBool[IO](
             password.value,
             PasswordHash[BCrypt](signup.value.hashedPassword.value)
@@ -220,28 +163,15 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.some[IO](user)
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
           changePassword <- program.changePassword(user.email, NewPasswordInfo(user.hashedPassword, Password("new password")))
         } yield {
           changePassword shouldBe Left("Password mismatch, unable to update password")
         }).unsafeRunSync()
       }
     }
-    it ("should change the password if the old password matches") {
+    it("should change the password if the old password matches") {
       forAll(usersGeneratorsWithPass) { case (user: User, password: Password) =>
         val userRepo = new UsersRepositoryAlg[IO] {
           override def find(email: Email): IO[Option[User]] = user.some.pure[IO]
@@ -253,24 +183,53 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = ???
         }
 
-        val authenticator = {
-          val key = HMACSHA256.unsafeGenerateKey
-          val idStore: IdentityStore[IO, Email, User] = (_: Email) => OptionT.some[IO](user)
-
-          JWTAuthenticator.unbacked.inBearerToken(
-            expiryDuration = 1.day,
-            maxIdle = None,
-            identityStore = idStore,
-            signingKey = key
-          )
-        }
-
         (for {
-          program <- AuthProgram.make[IO](userRepo, authenticator)
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
           changePassword <- program.changePassword(user.email, NewPasswordInfo(password, Password("new password")))
         } yield {
           changePassword shouldBe a[Right[_, _]]
           changePassword.value shouldBe a[Some[User]]
+        }).unsafeRunSync()
+      }
+    }
+    it("should delete a user if it exists") {
+      forAll(usersGeneratorsWithPass) { case (user: User, password: Password) =>
+        val userRepo = new UsersRepositoryAlg[IO] {
+          override def find(email: Email): IO[Option[User]] = ???
+
+          override def create(user: User): IO[Email] = ???
+
+          override def update(user: User): IO[Option[User]] = ???
+
+          override def delete(email: Email): IO[Boolean] = true.pure[IO]
+        }
+
+        (for {
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
+          delete <- program.deleteUser(user.email)
+        } yield {
+          delete shouldBe true
+        }).unsafeRunSync()
+      }
+    }
+    it("should not delete a user if it doesn't exists") {
+      forAll(usersGeneratorsWithPass) { case (user: User, password: Password) =>
+        val userRepo = new UsersRepositoryAlg[IO] {
+          override def find(email: Email): IO[Option[User]] = ???
+
+          override def create(user: User): IO[Email] = ???
+
+          override def update(user: User): IO[Option[User]] = ???
+
+          override def delete(email: Email): IO[Boolean] = false.pure[IO]
+        }
+
+
+        (for {
+          program <- AuthProgram.make[IO](userRepo, mockConfig)
+          delete <- program.deleteUser(user.email)
+        } yield {
+          delete shouldBe false
         }).unsafeRunSync()
       }
     }
