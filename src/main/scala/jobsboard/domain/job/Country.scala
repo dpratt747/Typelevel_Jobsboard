@@ -8,7 +8,8 @@ import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.{*, given}
 
 object Country {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Country must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Country must not be empty or blank"
   opaque type Country = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -26,4 +27,3 @@ object Country {
 
   given Put[Country] = Put[String].tcontramap(_.value)
 }
-

@@ -6,12 +6,12 @@ import jobsboard.domain.job.Password.Password
 
 package object auth {
   final case class LoginInfo(
-                              email: Email,
-                              password: Password
-                            )
+      email: Email,
+      password: Password
+  )
 
   final case class NewPasswordInfo(
-                                    oldPassword: Password,
-                                    newPassword: Password
-                                  )
+      oldPassword: Password,
+      newPassword: Password
+  )
 }

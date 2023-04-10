@@ -11,7 +11,8 @@ import doobie.postgres.implicits.*
 import doobie.implicits.*
 
 object Tags {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Tag must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Tag must not be empty or blank"
   opaque type Tags = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -25,9 +26,8 @@ object Tags {
     Either.catchNonFatal(apply(str)).leftMap(_.getMessage)
   }
 
-  given Get[Tags] = Get[String].tmap(apply)
+  given Get[Tags]       = Get[String].tmap(apply)
   given Get[List[Tags]] = Get[List[String]].tmap(list => list.map(apply))
   given Put[List[Tags]] = Put[List[String]].tcontramap(_.map(_.value))
-  given Put[Tags] = Put[String].tcontramap(_.value)
+  given Put[Tags]       = Put[String].tcontramap(_.value)
 }
-

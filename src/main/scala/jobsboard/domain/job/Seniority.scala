@@ -8,7 +8,8 @@ import io.github.iltotore.iron.{*, given}
 import doobie.*
 
 object Seniority {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Seniority must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Seniority must not be empty or blank"
   opaque type Seniority = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -26,4 +27,3 @@ object Seniority {
 
   given Put[Seniority] = Put[String].tcontramap(_.value)
 }
-

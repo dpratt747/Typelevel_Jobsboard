@@ -14,7 +14,12 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import com.comcast.ip4s.*
-import com.github.dpratt747.jobsboard.config.{ApplicationConfig, EmberConfig, PostgresConfig, SecurityConfig}
+import com.github.dpratt747.jobsboard.config.{
+  ApplicationConfig,
+  EmberConfig,
+  PostgresConfig,
+  SecurityConfig
+}
 import org.scalatest.{EitherValues, OptionValues}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,14 +33,26 @@ import tsec.passwordhashers.jca.BCrypt
 
 import scala.concurrent.duration.*
 
-class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with ScalaCheckPropertyChecks with OptionValues with EitherValues {
+class AuthProgramSpec
+    extends AnyFunSpec
+    with UsersGenerators
+    with Matchers
+    with ScalaCheckPropertyChecks
+    with OptionValues
+    with EitherValues {
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   val mockConfig: ApplicationConfig = ApplicationConfig(
     SecurityConfig("secret", 1.day),
     EmberConfig(Host.fromString("0.0.0.0").get, Port.fromInt(4200).get),
-    PostgresConfig(1, "org.postgresql.Driver", "jdbc:postgresql://localhost:5432/board", "docker", "docker")
+    PostgresConfig(
+      1,
+      "org.postgresql.Driver",
+      "jdbc:postgresql://localhost:5432/board",
+      "docker",
+      "docker"
+    )
   )
 
   describe("AuthProgram") {
@@ -53,11 +70,10 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          login <- program.login(user.email, user.hashedPassword)
+          login   <- program.login(user.email, user.hashedPassword)
         } yield {
           login shouldBe None
         }).unsafeRunSync()
-
 
       }
     }
@@ -75,8 +91,8 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          pw <- BCrypt.hashpw[IO](user.hashedPassword.value).map(_.toString)
-          login <- program.login(user.email, Password(pw))
+          pw      <- BCrypt.hashpw[IO](user.hashedPassword.value).map(_.toString)
+          login   <- program.login(user.email, Password(pw))
         } yield {
           login shouldBe None
         }).unsafeRunSync()
@@ -96,7 +112,7 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          login <- program.login(user.email, pw)
+          login   <- program.login(user.email, pw)
         } yield {
           login shouldBe a[Some[Any]]
         }).unsafeRunSync()
@@ -116,7 +132,15 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          signup <- program.signUp(NewUserInfo(user.email, user.hashedPassword, user.firstName, user.lastName, user.company))
+          signup <- program.signUp(
+            NewUserInfo(
+              user.email,
+              user.hashedPassword,
+              user.firstName,
+              user.lastName,
+              user.company
+            )
+          )
         } yield {
           signup shouldBe a[None.type]
         }).unsafeRunSync()
@@ -136,7 +160,9 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          signup <- program.signUp(NewUserInfo(user.email, password, user.firstName, user.lastName, user.company))
+          signup <- program.signUp(
+            NewUserInfo(user.email, password, user.firstName, user.lastName, user.company)
+          )
           pwBool <- BCrypt.checkpwBool[IO](
             password.value,
             PasswordHash[BCrypt](signup.value.hashedPassword.value)
@@ -165,7 +191,10 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          changePassword <- program.changePassword(user.email, NewPasswordInfo(user.hashedPassword, Password("new password")))
+          changePassword <- program.changePassword(
+            user.email,
+            NewPasswordInfo(user.hashedPassword, Password("new password"))
+          )
         } yield {
           changePassword shouldBe Left("Password mismatch, unable to update password")
         }).unsafeRunSync()
@@ -185,7 +214,10 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          changePassword <- program.changePassword(user.email, NewPasswordInfo(password, Password("new password")))
+          changePassword <- program.changePassword(
+            user.email,
+            NewPasswordInfo(password, Password("new password"))
+          )
         } yield {
           changePassword shouldBe a[Right[_, _]]
           changePassword.value shouldBe a[Some[User]]
@@ -206,7 +238,7 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
 
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          delete <- program.deleteUser(user.email)
+          delete  <- program.deleteUser(user.email)
         } yield {
           delete shouldBe true
         }).unsafeRunSync()
@@ -224,10 +256,9 @@ class AuthProgramSpec extends AnyFunSpec with UsersGenerators with Matchers with
           override def delete(email: Email): IO[Boolean] = false.pure[IO]
         }
 
-
         (for {
           program <- AuthProgram.make[IO](userRepo, mockConfig)
-          delete <- program.deleteUser(user.email)
+          delete  <- program.deleteUser(user.email)
         } yield {
           delete shouldBe false
         }).unsafeRunSync()

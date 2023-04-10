@@ -11,7 +11,8 @@ import doobie.implicits.*
 import doobie.postgres.implicits.*
 
 object Location {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Location must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Location must not be empty or blank"
   opaque type Location = String :| NotEmptyAndBlank
 
   def apply(value: String): Location = value.refine
@@ -28,4 +29,3 @@ object Location {
 
   given Put[Location] = Put[String].tcontramap(_.value)
 }
-

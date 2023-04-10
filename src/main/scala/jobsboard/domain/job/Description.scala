@@ -10,7 +10,8 @@ import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.{*, given}
 
 object Description {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Description must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Description must not be empty or blank"
   opaque type Description = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -28,4 +29,3 @@ object Description {
 
   given Put[Description] = Put[String].tcontramap(_.value)
 }
-

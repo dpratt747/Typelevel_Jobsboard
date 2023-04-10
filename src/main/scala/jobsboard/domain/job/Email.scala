@@ -16,8 +16,8 @@ import io.github.iltotore.iron.{*, given}
 object Email {
 
   type ValidEmail =
-    Match["^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\\.)+[a-z]{2,5}$"] DescribedAs "Should be an Email address"
-
+    Match["^[a-z0-9][-a-z0-9._]+@([-a-z0-9]+\\.)+[a-z]{2,5}$"] DescribedAs
+      "Should be an Email address"
 
   opaque type Email = String :| ValidEmail
 
@@ -29,13 +29,12 @@ object Email {
   extension (e: Email) def value: String = e
 
   given Encoder[Email] = Encoder[String].contramap(_.value)
-  
-  given Decoder[Email] = Decoder[String].emap{ str =>
+
+  given Decoder[Email] = Decoder[String].emap { str =>
     Either.catchNonFatal(apply(str)).leftMap(_.getMessage)
   }
-  
+
   given companyNameGet: Get[Email] = Get[String].tmap(apply)
 
   given companyNamePut: Put[Email] = Put[String].tcontramap(_.value)
 }
-

@@ -27,7 +27,12 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import java.util.UUID
 
-class HealthRoutesSpec extends AnyFunSpec with Matchers with Http4sDsl[IO] with JobGenerators with ScalaCheckPropertyChecks {
+class HealthRoutesSpec
+    extends AnyFunSpec
+    with Matchers
+    with Http4sDsl[IO]
+    with JobGenerators
+    with ScalaCheckPropertyChecks {
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   describe("HealthRoutes") {

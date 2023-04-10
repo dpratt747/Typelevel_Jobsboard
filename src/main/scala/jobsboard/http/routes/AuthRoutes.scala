@@ -33,69 +33,71 @@ trait AuthRoutesAlg[F[_]] {
   def routes: HttpRoutes[F]
 }
 
-final case class AuthRoutes[F[_] : Concurrent : Logger] private(
-                                                                 private val authProgram: AuthProgramAlg[F],
-                                                                 private val authenticator: Authenticator[F]
-                                                               ) extends AuthRoutesAlg[F] with Http4sDsl[F] {
+final case class AuthRoutes[F[_]: Concurrent: Logger] private (
+    private val authProgram: AuthProgramAlg[F],
+    private val authenticator: Authenticator[F]
+) extends AuthRoutesAlg[F]
+    with Http4sDsl[F] {
 
   private val securedRequestHandler = SecuredRequestHandler(authenticator)
 
   // Post /auth/login
-  private def loginRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req@POST -> Root / "login" =>
-      val jwtTokenO: F[Option[AugmentedJWT[Crypto, Email]]] = for {
-        loginRequest <- req.as[LoginInfo]
-        token <- authProgram.login(loginRequest.email, loginRequest.password)
-      } yield token
+  private def loginRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "login" =>
+    val jwtTokenO: F[Option[AugmentedJWT[Crypto, Email]]] = for {
+      loginRequest <- req.as[LoginInfo]
+      token        <- authProgram.login(loginRequest.email, loginRequest.password)
+    } yield token
 
-      jwtTokenO.map {
-        case Some(token) => authenticator.embed(Response(Status.Ok), token)
-        case None => Response(Status.Unauthorized)
-      }
+    jwtTokenO.map {
+      case Some(token) => authenticator.embed(Response(Status.Ok), token)
+      case None        => Response(Status.Unauthorized)
+    }
   }
 
   // POST /auth/users
   private def createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req@POST -> Root / "user" =>
+    case req @ POST -> Root / "user" =>
       for {
         newUser <- req.as[NewUserInfo]
-        _ <- Logger[F].info(s"New user request: $newUser")
-        signup <- authProgram.signUp(newUser)
+        _       <- Logger[F].info(s"New user request: $newUser")
+        signup  <- authProgram.signUp(newUser)
         response <- signup match {
           case Some(user) => Created(user.email)
-          case None => BadRequest(FailureResponse(s"User with email (${newUser.email}) already exists."))
+          case None =>
+            BadRequest(FailureResponse(s"User with email (${newUser.email}) already exists."))
         }
       } yield response
   }
 
   // PUT /auth/users/password
   private def changePasswordRoute: AuthRoute[F] = {
-    case req@PUT -> Root / "user" / "password" asAuthed user =>
+    case req @ PUT -> Root / "user" / "password" asAuthed user =>
       for {
-        newPasswordInfo <- req.request.as[NewPasswordInfo]
+        newPasswordInfo  <- req.request.as[NewPasswordInfo]
         maybeUserOrError <- authProgram.changePassword(user.email, newPasswordInfo)
         resp <- maybeUserOrError match {
           case Right(Some(_)) => Ok()
-          case Right(None) => NotFound(FailureResponse(s"User with email (${user.email}) not found."))
+          case Right(None) =>
+            NotFound(FailureResponse(s"User with email (${user.email}) not found."))
           case Left(error) => Forbidden(FailureResponse(error))
         }
       } yield resp
   }
 
   // POST /auth/logout
-  private def logoutRoute: AuthRoute[F] = {
-    case req@POST -> Root / "logout" asAuthed _ => Ok("TODO")
-      val token = req.authenticator
-      for {
-        _ <- authenticator.discard(token)
-        resp <- Ok()
-      } yield resp
+  private def logoutRoute: AuthRoute[F] = { case req @ POST -> Root / "logout" asAuthed _ =>
+    Ok("TODO")
+    val token = req.authenticator
+    for {
+      _    <- authenticator.discard(token)
+      resp <- Ok()
+    } yield resp
   }
 
   private def deleteUserRoute: AuthRoute[F] = {
     case DELETE -> Root / "user" / Email(email) asAuthed user =>
       authProgram.deleteUser(email).flatMap {
-        case true => Ok()
+        case true  => Ok()
         case false => NotFound(FailureResponse(s"User with email ($email) not deleted."))
       }
   }
@@ -115,7 +117,10 @@ final case class AuthRoutes[F[_] : Concurrent : Logger] private(
 }
 
 object AuthRoutes {
-  def make[F[_] : Concurrent : Monad : Logger](authProgram: AuthProgramAlg[F], authenticator: Authenticator[F]): F[AuthRoutesAlg[F]] =
+  def make[F[_]: Concurrent: Monad: Logger](
+      authProgram: AuthProgramAlg[F],
+      authenticator: Authenticator[F]
+  ): F[AuthRoutesAlg[F]] =
     AuthRoutes[F](authProgram, authenticator).pure[F]
 
 }

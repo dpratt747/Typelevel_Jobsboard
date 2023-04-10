@@ -10,12 +10,15 @@ final case class EmberConfig(host: Host, port: Port) derives ConfigReader
 
 object EmberConfig {
   given ConfigReader[Port] = ConfigReader[Int].emap(port =>
-    Port.fromInt(port).toRight(CannotConvert(port.toString, Port.getClass.toString, "Invalid port number"))
+    Port
+      .fromInt(port)
+      .toRight(CannotConvert(port.toString, Port.getClass.toString, "Invalid port number"))
   )
 
   given ConfigReader[Host] = ConfigReader[String].emap(hostString =>
-    Host.fromString(hostString).toRight(CannotConvert(hostString, Host.getClass.toString, "Invalid host"))
+    Host
+      .fromString(hostString)
+      .toRight(CannotConvert(hostString, Host.getClass.toString, "Invalid host"))
   )
-
 
 }

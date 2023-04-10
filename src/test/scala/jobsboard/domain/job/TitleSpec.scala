@@ -15,8 +15,12 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.util.UUID
 
-
-class TitleSpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers with EitherValues with ScalaCheckDrivenPropertyChecks {
+class TitleSpec
+    extends AnyFunSpec
+    with TypeCheckedTripleEquals
+    with Matchers
+    with EitherValues
+    with ScalaCheckDrivenPropertyChecks {
 
   final case class TitleWrapper(title: Title)
 
@@ -28,22 +32,26 @@ class TitleSpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers wi
       }
     }
     it("should not create a Title with an empty string") {
-      the[IllegalArgumentException] thrownBy Title("") should have message "Title must not be empty or blank"
+      the[IllegalArgumentException] thrownBy Title(
+        ""
+      ) should have message "Title must not be empty or blank"
     }
     it("should not create a Title with an blank string") {
-      the[IllegalArgumentException] thrownBy Title("  ") should have message "Title must not be empty or blank"
+      the[IllegalArgumentException] thrownBy Title(
+        "  "
+      ) should have message "Title must not be empty or blank"
     }
     it("should be able to encode a CompanyName as json") {
       forAll(Gen.stringOfN(10, Gen.alphaChar)) { (str: String) =>
         val toEncode: Title = Title(str)
-        val encoded = toEncode.asJson.noSpaces
+        val encoded         = toEncode.asJson.noSpaces
 
         encoded === s"$str"
       }
     }
     it("should be able to decode a json") {
       forAll(Gen.stringOfN(10, Gen.alphaChar)) { (str: String) =>
-        val json: String = s"""{"title": "$str"}"""
+        val json: String  = s"""{"title": "$str"}"""
         val decodeAttempt = decode[TitleWrapper](json)
 
         decodeAttempt.value.title.value === str
@@ -51,7 +59,7 @@ class TitleSpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers wi
     }
     it("should fail to decode an invalid json") {
       val jsonId: String = """{"title": ""}"""
-      val decodeAttempt = decode[TitleWrapper](jsonId)
+      val decodeAttempt  = decode[TitleWrapper](jsonId)
 
       decodeAttempt.left.value shouldBe a[io.circe.DecodingFailure]
     }

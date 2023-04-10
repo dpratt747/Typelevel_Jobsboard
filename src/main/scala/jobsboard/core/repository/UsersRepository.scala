@@ -18,7 +18,6 @@ import doobie.implicits.*
 import doobie.postgres.implicits.*
 import org.typelevel.log4cats.Logger
 
-
 trait UsersRepositoryAlg[F[_]] {
   def find(email: Email): F[Option[User]]
 
@@ -29,9 +28,9 @@ trait UsersRepositoryAlg[F[_]] {
   def delete(email: Email): F[Boolean]
 }
 
-final case class UsersRepository[F[_] : MonadCancelThrow : Logger] private(
-                                                                            private val xa: Transactor[F]
-                                                                          ) extends UsersRepositoryAlg[F] {
+final case class UsersRepository[F[_]: MonadCancelThrow: Logger] private (
+    private val xa: Transactor[F]
+) extends UsersRepositoryAlg[F] {
   override def find(email: Email): F[Option[User]] =
     sql"""
          | SELECT email, hashed_password, first_name, last_name, company, role
@@ -46,12 +45,9 @@ final case class UsersRepository[F[_] : MonadCancelThrow : Logger] private(
     sql"""
          | INSERT INTO users (email, hashed_password, first_name, last_name, company, role)
          | VALUES (${user.email}, ${user.hashedPassword}, ${user.firstName}, ${user.lastName}, ${user.company}, ${user.role})
-       """.stripMargin
-      .update
-      .run
+       """.stripMargin.update.run
       .transact(xa)
       .map(_ => user.email)
-
 
   override def update(user: User): F[Option[User]] = {
     val update =
@@ -59,13 +55,11 @@ final case class UsersRepository[F[_] : MonadCancelThrow : Logger] private(
            | UPDATE users
            |  SET hashed_password = ${user.hashedPassword}, first_name = ${user.firstName}, last_name = ${user.lastName}, company = ${user.company}, role = ${user.role}
            |  WHERE email = ${user.email}
-       """.stripMargin
-        .update
-        .run
+       """.stripMargin.update.run
         .transact(xa)
 
     for {
-      _ <- update
+      _    <- update
       user <- find(user.email)
     } yield user
   }
@@ -74,13 +68,12 @@ final case class UsersRepository[F[_] : MonadCancelThrow : Logger] private(
     sql"""
          | DELETE FROM users
          | WHERE email = $email
-        """.stripMargin
-      .update
-      .run
+        """.stripMargin.update.run
       .transact(xa)
       .map(_ > 0)
 }
 
 object UsersRepository {
-  def make[F[_] : MonadCancelThrow : Logger](xa: Transactor[F]): F[UsersRepositoryAlg[F]] = UsersRepository[F](xa).pure[F]
+  def make[F[_]: MonadCancelThrow: Logger](xa: Transactor[F]): F[UsersRepositoryAlg[F]] =
+    UsersRepository[F](xa).pure[F]
 }

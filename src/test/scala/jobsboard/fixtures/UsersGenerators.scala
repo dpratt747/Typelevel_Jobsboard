@@ -33,31 +33,31 @@ trait UsersGenerators extends JobGenerators {
   val roleGen: Gen[Role] = Gen.oneOf(Role.values)
 
   val usersGeneratorsWithPass: Gen[(User, Password)] = for {
-    email <- emailGen
+    email    <- emailGen
     password <- passwordGen
     hashedPassword = Password(BCrypt.hashpwUnsafe(password.value))
     firstName <- Gen.option(firstNameGen)
-    lastName <- Gen.option(lastNameGen)
-    company <- Gen.option(companyNameGen)
-    role <- roleGen
+    lastName  <- Gen.option(lastNameGen)
+    company   <- Gen.option(companyNameGen)
+    role      <- roleGen
   } yield (User(email, hashedPassword, firstName, lastName, company, role), password)
 
   val usersGenerators: Gen[User] = for {
-    email <- emailGen
+    email    <- emailGen
     password <- passwordGen
     hashedPassword = Password(BCrypt.hashpwUnsafe(password.value))
     firstName <- Gen.option(firstNameGen)
-    lastName <- Gen.option(lastNameGen)
-    company <- Gen.option(companyNameGen)
-    role <- roleGen
+    lastName  <- Gen.option(lastNameGen)
+    company   <- Gen.option(companyNameGen)
+    role      <- roleGen
   } yield User(email, hashedPassword, firstName, lastName, company, role)
-  
+
   val newUserInfoGen: Gen[NewUserInfo] = for {
-    email <- emailGen
-    password <- passwordGen
+    email     <- emailGen
+    password  <- passwordGen
     firstName <- Gen.option(firstNameGen)
-    lastName <- Gen.option(lastNameGen)
-    company <- Gen.option(companyNameGen)
+    lastName  <- Gen.option(lastNameGen)
+    company   <- Gen.option(companyNameGen)
   } yield NewUserInfo(email, password, firstName, lastName, company)
-  
+
 }

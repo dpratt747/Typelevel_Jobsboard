@@ -27,6 +27,14 @@ sbt 'testOnly *JobRoutesSpec -- -z "<test name>"'
 ```bash
 sbt "~IntegrationTest/compile" 
 ```
+
+**To run in debug mode:**
+
+run the following command and then connect to the debugger on port 5005
+```bash
+sbt -jvm-debug 5005 "runMain com.github.dpratt747.jobsboard.Application"
+```
+
 ---
 
 ## Endpoints:

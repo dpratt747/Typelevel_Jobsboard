@@ -9,7 +9,8 @@ import cats.implicits.*
 import doobie.*
 
 object Other {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Other must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Other must not be empty or blank"
   opaque type Other = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -27,4 +28,3 @@ object Other {
 
   given Put[Other] = Put[String].tcontramap(_.value)
 }
-

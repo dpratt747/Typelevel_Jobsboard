@@ -7,7 +7,6 @@ import doobie.{ExecutionContexts, HC, Transactor}
 import doobie.hikari.HikariTransactor
 import org.testcontainers.containers.PostgreSQLContainer
 
-
 trait DoobieSpec {
 
   val initScript: String
@@ -16,7 +15,7 @@ trait DoobieSpec {
     val acquire = {
       val container: PostgreSQLContainer[Nothing] = new PostgreSQLContainer("postgres")
         .withInitScript(initScript)
-      IO{
+      IO {
         container.start()
         container
       }
@@ -27,7 +26,7 @@ trait DoobieSpec {
 
   def transactor: Resource[IO, Transactor[IO]] = for {
     container <- postgresResource
-    ec <- ExecutionContexts.fixedThreadPool[IO](1)
+    ec        <- ExecutionContexts.fixedThreadPool[IO](1)
     trans <- HikariTransactor.newHikariTransactor[IO](
       "org.postgresql.Driver",
       container.getJdbcUrl,

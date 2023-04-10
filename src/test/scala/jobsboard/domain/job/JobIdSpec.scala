@@ -15,11 +15,15 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.util.UUID
 
-
-class JobIdSpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers with EitherValues with ScalaCheckDrivenPropertyChecks {
+class JobIdSpec
+    extends AnyFunSpec
+    with TypeCheckedTripleEquals
+    with Matchers
+    with EitherValues
+    with ScalaCheckDrivenPropertyChecks {
 
   final case class IdWrapper(id: JobId)
-  
+
   describe("JobId") {
     it("should create a jobId") {
       forAll { (id: UUID) =>
@@ -35,7 +39,7 @@ class JobIdSpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers wi
     it("should be able to encode an id as json") {
       forAll { (id: UUID) =>
         val jobId: JobId = JobId(id.toString)
-        val encoded = jobId.asJson.noSpaces
+        val encoded      = jobId.asJson.noSpaces
 
         encoded === s"${id.toString}"
       }
@@ -43,14 +47,14 @@ class JobIdSpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers wi
     it("should be able to decode an id json") {
       forAll { (id: UUID) =>
         val jsonId: String = s"""{"id": "${id.toString}"}"""
-        val decodeAttempt = decode[IdWrapper](jsonId)
+        val decodeAttempt  = decode[IdWrapper](jsonId)
 
         decodeAttempt.value.id.value === id.toString
       }
     }
     it("should fail to decode an invalid id json") {
       val jsonId: String = """{"id": "this is not a valid id"}"""
-      val decodeAttempt = decode[IdWrapper](jsonId)
+      val decodeAttempt  = decode[IdWrapper](jsonId)
 
       decodeAttempt.left.value shouldBe a[io.circe.DecodingFailure]
     }

@@ -23,34 +23,40 @@ import java.util.Locale.IsoCountryCode
 package object job {
 
   final case class Job(
-                        id: JobId,
-                        date: Long,
-                        ownerEmail: Email,
-                        jobInfo: JobInfo,
-                        active: Boolean = false
-                      )
-
+      id: JobId,
+      date: Long,
+      ownerEmail: Email,
+      jobInfo: JobInfo,
+      active: Boolean = false
+  )
 
   final case class JobInfo(
-                            company: CompanyName,
-                            title: Title,
-                            description: Description,
-                            externalUrl: URL,
-                            remote: Boolean,
-                            location: Location,
-                            currency: Option[Currency],
-                            salaryLo: Option[SalaryLow],
-                            salaryHi: Option[SalaryHigh],
-                            country: Option[Country],
-                            tags: Option[List[Tags]],
-                            image: Option[Image],
-                            seniority: Option[Seniority],
-                            other: Option[Other]
-                          )
+      company: CompanyName,
+      title: Title,
+      description: Description,
+      externalUrl: URL,
+      remote: Boolean,
+      location: Location,
+      currency: Option[Currency],
+      salaryLo: Option[SalaryLow],
+      salaryHi: Option[SalaryHigh],
+      country: Option[Country],
+      tags: Option[List[Tags]],
+      image: Option[Image],
+      seniority: Option[Seniority],
+      other: Option[Other]
+  )
 
   object JobInfo {
 
-    def minimal(company: CompanyName, title: Title, description: Description, externalUrl: URL, remote: Boolean, location: Location): JobInfo = JobInfo(
+    def minimal(
+        company: CompanyName,
+        title: Title,
+        description: Description,
+        externalUrl: URL,
+        remote: Boolean,
+        location: Location
+    ): JobInfo = JobInfo(
       company = company,
       title = title,
       description = description,
@@ -69,12 +75,12 @@ package object job {
   }
 
   final case class JobFilter(
-                              companies: Option[List[CompanyName]] = None,
-                              locations: Option[List[Location]] = None,
-                              countries: Option[List[Country]] = None,
-                              seniorities: Option[List[Seniority]] = None,
-                              tags: Option[List[Tags]] = None,
-                              maxSalary: Option[SalaryHigh] = None,
-                              remote: Option[Boolean] = None
-                            )
+      companies: Option[List[CompanyName]] = None,
+      locations: Option[List[Location]] = None,
+      countries: Option[List[Country]] = None,
+      seniorities: Option[List[Seniority]] = None,
+      tags: Option[List[Tags]] = None,
+      maxSalary: Option[SalaryHigh] = None,
+      remote: Option[Boolean] = None
+  )
 }

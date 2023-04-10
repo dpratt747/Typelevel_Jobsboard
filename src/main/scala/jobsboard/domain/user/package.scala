@@ -7,25 +7,30 @@ import jobsboard.domain.job.FirstName.FirstName
 import jobsboard.domain.job.LastName.LastName
 import jobsboard.domain.job.Password.Password
 
+import com.github.dpratt747.jobsboard.domain.job.Job
 import tsec.authorization.{AuthGroup, SimpleAuthEnum}
 
 package object user {
   final case class User(
-                         email: Email,
-                         hashedPassword: Password,
-                         firstName: Option[FirstName],
-                         lastName: Option[LastName],
-                         company: Option[CompanyName],
-                         role: Role
-                       )
+      email: Email,
+      hashedPassword: Password,
+      firstName: Option[FirstName],
+      lastName: Option[LastName],
+      company: Option[CompanyName],
+      role: Role
+  ) {
+    def owns(job: Job): Boolean = job.ownerEmail == email
+    def isAdmin: Boolean        = role == Role.ADMIN
+    def isRecruiter: Boolean    = role == Role.RECRUITER
+  }
 
-  final case class eNewUserInfo(
-                                email: Email,
-                                password: Password,
-                                firstName: Option[FirstName],
-                                lastName: Option[LastName],
-                                company: Option[CompanyName]
-                              )
+  final case class NewUserInfo(
+      email: Email,
+      password: Password,
+      firstName: Option[FirstName],
+      lastName: Option[LastName],
+      company: Option[CompanyName]
+  )
 
   enum Role {
     case ADMIN, RECRUITER

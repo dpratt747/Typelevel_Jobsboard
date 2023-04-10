@@ -37,11 +37,11 @@ object JobsPlayground extends IOApp.Simple {
   override def run: IO[Unit] = transactor.use { xa =>
     for {
       repo <- JobsRepository.make[IO](xa)
-      id <- repo.createJob(Email("dpratt747@gmail.com"), jobInfo)
-      id2 <-repo.createJob(Email("anotheremail@valid.com"), jobInfo)
-      _ <- repo.find(id).map(println)
-      _ <-repo.all().map(println)
-      _ <- repo.delete(id)
+      id   <- repo.createJob(Email("dpratt747@gmail.com"), jobInfo)
+      id2  <- repo.createJob(Email("anotheremail@valid.com"), jobInfo)
+      _    <- repo.find(id).map(println)
+      _    <- repo.all().map(println)
+      _    <- repo.delete(id)
     } yield ()
   }
 

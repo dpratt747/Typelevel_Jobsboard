@@ -2,6 +2,7 @@ package com.github.dpratt747
 package jobsboard.domain.job
 
 import cats.implicits.*
+import com.github.dpratt747.jobsboard.domain.job.Email.{Email, ValidEmail}
 import doobie.*
 import doobie.implicits.*
 import doobie.postgres.implicits.*
@@ -14,6 +15,9 @@ import java.util.UUID
 object JobId {
   opaque type JobId = String :| ValidUUID
 
+  def unapply(id: String): Option[JobId] = id.refineOption[ValidUUID]
+  def unapply(id: UUID): Option[JobId]   = id.toString.refineOption[ValidUUID]
+
   @throws[IllegalArgumentException]
   def apply(value: String): JobId = value.refine
 
@@ -22,9 +26,8 @@ object JobId {
 
   extension (j: JobId) {
     def value: String = j
-    def uuid: UUID = UUID.fromString(j.value)
+    def uuid: UUID    = UUID.fromString(j.value)
   }
-    
 
   given Encoder[JobId] = Encoder[String].contramap(_.value)
 
@@ -37,4 +40,3 @@ object JobId {
   given Put[JobId] = Put[UUID].tcontramap(id => UUID.fromString(id.value))
 
 }
-

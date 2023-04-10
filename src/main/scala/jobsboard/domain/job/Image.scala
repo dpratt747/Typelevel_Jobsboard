@@ -10,7 +10,8 @@ import cats.implicits.*
 import doobie.*
 
 object Image {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Image must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Image must not be empty or blank"
   opaque type Image = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -28,4 +29,3 @@ object Image {
 
   given Put[Image] = Put[String].tcontramap(_.value)
 }
-

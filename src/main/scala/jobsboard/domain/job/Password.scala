@@ -10,7 +10,8 @@ import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.{*, given}
 
 object Password {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "LastName must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "LastName must not be empty or blank"
   opaque type Password = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -29,4 +30,3 @@ object Password {
   given Put[Password] = Put[String].tcontramap(_.value)
 
 }
-

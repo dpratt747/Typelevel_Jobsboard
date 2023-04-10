@@ -10,7 +10,8 @@ import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.{*, given}
 
 object Title {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Title must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Title must not be empty or blank"
   opaque type Title = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -23,10 +24,8 @@ object Title {
   given Decoder[Title] = Decoder[String].emap { str =>
     Either.catchNonFatal(apply(str)).leftMap(_.getMessage)
   }
-  
+
   given Get[Title] = Get[String].tmap(apply)
 
   given Put[Title] = Put[String].tcontramap(_.value)
 }
-
-

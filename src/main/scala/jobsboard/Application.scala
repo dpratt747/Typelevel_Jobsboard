@@ -24,14 +24,13 @@ import pureconfig.error.ConfigReaderException
 import tsec.authentication.{IdentityStore, JWTAuthenticator}
 import tsec.mac.jca.HMACSHA256
 
-
 object Application extends IOApp.Simple {
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   private val transactorWithConfig: Resource[IO, (HikariTransactor[IO], ApplicationConfig)] = for {
     config <- Resource.eval(ConfigSource.default.loadF[IO, ApplicationConfig])
-    ec <- ExecutionContexts.fixedThreadPool[IO](config.postgresConfig.numberOfThreads)
+    ec     <- ExecutionContexts.fixedThreadPool[IO](config.postgresConfig.numberOfThreads)
     trans <- HikariTransactor.newHikariTransactor[IO](
       config.postgresConfig.driver,
       config.postgresConfig.url,
@@ -40,17 +39,18 @@ object Application extends IOApp.Simple {
       ec
     )
   } yield (trans, config)
-  
+
   override def run: IO[Unit] =
     transactorWithConfig.use { (xa, config) =>
       for {
-        jobsRepo <- JobsRepository.make[IO](xa)
+        jobsRepo    <- JobsRepository.make[IO](xa)
         jobsProgram <- JobsProgram.make[IO](jobsRepo)
-        userRepo <- UsersRepository.make[IO](xa)
+        userRepo    <- UsersRepository.make[IO](xa)
         authProgram <- AuthProgram.make[IO](userRepo, config)
-        httpApp <- HttpApi.make[IO](jobsProgram, authProgram, authProgram.authenticator)
-        routes <- httpApp.routes
-        server <- EmberServerBuilder.default[IO]
+        httpApp     <- HttpApi.make[IO](jobsProgram, authProgram, authProgram.authenticator)
+        routes      <- httpApp.routes
+        server <- EmberServerBuilder
+          .default[IO]
           .withHost(config.emberConfig.host)
           .withPort(config.emberConfig.port)
           .withHttpApp(routes.orNotFound)

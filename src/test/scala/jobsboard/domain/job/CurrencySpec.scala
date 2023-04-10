@@ -15,8 +15,12 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.util.UUID
 
-
-class CurrencySpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers with EitherValues with ScalaCheckDrivenPropertyChecks {
+class CurrencySpec
+    extends AnyFunSpec
+    with TypeCheckedTripleEquals
+    with Matchers
+    with EitherValues
+    with ScalaCheckDrivenPropertyChecks {
 
   final case class CurrencyWrapper(currency: Currency)
 
@@ -28,22 +32,26 @@ class CurrencySpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers
       }
     }
     it("should not create a Currency with an empty string") {
-      the[IllegalArgumentException] thrownBy Currency("") should have message "Currency must not be empty or blank"
+      the[IllegalArgumentException] thrownBy Currency(
+        ""
+      ) should have message "Currency must not be empty or blank"
     }
     it("should not create a Currency with a blank string") {
-      the[IllegalArgumentException] thrownBy Currency("  ") should have message "Currency must not be empty or blank"
+      the[IllegalArgumentException] thrownBy Currency(
+        "  "
+      ) should have message "Currency must not be empty or blank"
     }
     it("should be able to encode a Currency as json") {
       forAll(Gen.stringOfN(10, Gen.alphaChar)) { (str: String) =>
         val currency: Currency = Currency(str)
-        val encoded = currency.asJson.noSpaces
+        val encoded            = currency.asJson.noSpaces
 
         encoded === s"$str"
       }
     }
     it("should be able to decode a currency json") {
       forAll(Gen.stringOfN(10, Gen.alphaChar)) { (str: String) =>
-        val json: String = s"""{"currency": "$str"}"""
+        val json: String  = s"""{"currency": "$str"}"""
         val decodeAttempt = decode[CurrencyWrapper](json)
 
         decodeAttempt.value.currency.value === str
@@ -51,7 +59,7 @@ class CurrencySpec extends AnyFunSpec with TypeCheckedTripleEquals with Matchers
     }
     it("should fail to decode an invalid currency json") {
       val jsonId: String = """{"currency": ""}"""
-      val decodeAttempt = decode[CurrencyWrapper](jsonId)
+      val decodeAttempt  = decode[CurrencyWrapper](jsonId)
 
       decodeAttempt.left.value shouldBe a[io.circe.DecodingFailure]
     }

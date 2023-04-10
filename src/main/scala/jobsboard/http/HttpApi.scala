@@ -18,16 +18,16 @@ trait HttpApiAlg[F[_]] {
   def routes: F[HttpRoutes[F]]
 }
 
-final case class HttpApi[F[_] : Concurrent : Logger] private(
-                                                              private val jobsProgram: JobsProgramAlg[F],
-                                                              private val authProgram: AuthProgramAlg[F],
-                                                              private val authenticator: Authenticator[F]
-                                                            ) extends HttpApiAlg[F] {
+final case class HttpApi[F[_]: Concurrent: Logger] private (
+    private val jobsProgram: JobsProgramAlg[F],
+    private val authProgram: AuthProgramAlg[F],
+    private val authenticator: Authenticator[F]
+) extends HttpApiAlg[F] {
 
   override def routes: F[HttpRoutes[F]] = for {
     healthRoutes <- HealthRoutes.make[F]()
-    authRoutes <- AuthRoutes.make[F](authProgram, authenticator)
-    jobRoutes <- JobRoutes.make[F](jobsProgram)
+    authRoutes   <- AuthRoutes.make[F](authProgram, authenticator)
+    jobRoutes    <- JobRoutes.make[F](jobsProgram, authenticator)
   } yield Router(
     "/api" -> (healthRoutes.routes <+> jobRoutes.routes <+> authRoutes.routes)
   )
@@ -35,9 +35,9 @@ final case class HttpApi[F[_] : Concurrent : Logger] private(
 }
 
 object HttpApi {
-  def make[F[_] : Concurrent : Logger](
-                                        jobsProgram: JobsProgramAlg[F],
-                                        authProgram: AuthProgramAlg[F],
-                                        authenticator: Authenticator[F]
-                                      ): F[HttpApiAlg[F]] = HttpApi[F](jobsProgram, authProgram, authenticator).pure[F]
+  def make[F[_]: Concurrent: Logger](
+      jobsProgram: JobsProgramAlg[F],
+      authProgram: AuthProgramAlg[F],
+      authenticator: Authenticator[F]
+  ): F[HttpApiAlg[F]] = HttpApi[F](jobsProgram, authProgram, authenticator).pure[F]
 }

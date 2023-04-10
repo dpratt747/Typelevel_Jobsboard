@@ -17,7 +17,6 @@ import org.typelevel.log4cats.Logger
 import jobsboard.domain.pagination.*
 import jobsboard.logging.*
 
-
 trait JobsRepositoryAlg[F[_]] {
   def createJob(ownerEmail: Email, jobInfo: JobInfo): F[JobId]
 
@@ -32,22 +31,22 @@ trait JobsRepositoryAlg[F[_]] {
   def delete(jobId: JobId): F[Int]
 }
 
-final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
-                                                                  private val xa: Transactor[F]
-                                                                ) extends JobsRepositoryAlg[F] {
+final case class JobsRepository[F[_]: MonadCancelThrow: Logger] private (
+    private val xa: Transactor[F]
+) extends JobsRepositoryAlg[F] {
   override def createJob(ownerEmail: Email, jobInfo: JobInfo): F[JobId] =
     sql"""
          |INSERT INTO jobs (
          |  date, owner_email, company, title, description, external_url, remote, location, currency, salary_lo,
          |  salary_hi, country, tags, image, seniority, other, active
          |) VALUES (
-         |  ${System.currentTimeMillis()}, $ownerEmail, ${jobInfo.company}, ${jobInfo.title}, ${jobInfo.description},
+         |  ${System
+          .currentTimeMillis()}, $ownerEmail, ${jobInfo.company}, ${jobInfo.title}, ${jobInfo.description},
          |  ${jobInfo.externalUrl}, ${jobInfo.remote}, ${jobInfo.location}, ${jobInfo.currency}, ${jobInfo.salaryLo},
          |  ${jobInfo.salaryHi}, ${jobInfo.country}, ${jobInfo.tags}, ${jobInfo.image}, ${jobInfo.seniority},
          |  ${jobInfo.other}, false
          |)
-         |""".stripMargin
-      .update
+         |""".stripMargin.update
       .withUniqueGeneratedKeys[JobId]("id")
       .transact(xa)
 
@@ -57,8 +56,7 @@ final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
          |  id, date, owner_email, company, title, description, external_url, remote, location, currency, salary_lo,
          |  salary_hi, country, tags, image, seniority, other, active
          |FROM jobs
-         |"""
-      .stripMargin
+         |""".stripMargin
       .query[Job]
       .to[List]
       .transact(xa)
@@ -69,17 +67,16 @@ final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
           |SELECT
           |  id, date, owner_email, company, title, description, external_url, remote, location, currency, salary_lo,
           |  salary_hi, country, tags, image, seniority, other, active
-          |"""
-        .stripMargin
+          |""".stripMargin
 
     val fromFragment: Fragment = fr"FROM jobs"
 
     val whereFragment: Fragment = Fragments.whereAndOpt(
       filter.companies.flatMap(_.toNel).map(list => Fragments.in(fr"company", list)),
       filter.locations.flatMap(_.toNel).map(list => Fragments.in(fr"location", list)),
-      filter.tags.flatMap(_.toNel).map(list =>
-        Fragments.or(list.map(tag => fr"$tag = any(tags)").toList: _*)
-      ),
+      filter.tags
+        .flatMap(_.toNel)
+        .map(list => Fragments.or(list.map(tag => fr"$tag = any(tags)").toList: _*)),
       filter.countries.flatMap(_.toNel).map(list => Fragments.in(fr"country", list)),
       filter.seniorities.flatMap(_.toNel).map(list => Fragments.in(fr"seniority", list)),
       filter.maxSalary.map(salaryHigh => fr"salary_hi > $salaryHigh"),
@@ -91,11 +88,11 @@ final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
     val statement = selectFragment |+| fromFragment |+| whereFragment |+| paginationFragment
 
     Logger[F].info(statement.toString) *>
-    statement
-      .query[Job]
-      .to[List]
-      .transact(xa)
-      .logError(e => s"Failed to get jobs: ${e.getMessage}")
+      statement
+        .query[Job]
+        .to[List]
+        .transact(xa)
+        .logError(e => s"Failed to get jobs: ${e.getMessage}")
   }
 
   override def find(jobId: JobId): F[Option[Job]] =
@@ -105,8 +102,7 @@ final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
          |  salary_hi, country, tags, image, seniority, other, active
          |FROM jobs
          |WHERE id = $jobId
-         |"""
-      .stripMargin
+         |""".stripMargin
       .query[Job]
       .option
       .transact(xa)
@@ -130,9 +126,7 @@ final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
          |  seniority = ${jobInfo.seniority},
          |  other = ${jobInfo.other}
          |WHERE id = $jobId
-         |""".stripMargin
-      .update
-      .run
+         |""".stripMargin.update.run
       .transact(xa)
       .flatMap(_ => find(jobId))
 
@@ -140,13 +134,11 @@ final case class JobsRepository[F[_] : MonadCancelThrow: Logger] private(
     sql"""
          |DELETE FROM jobs
          |WHERE id = $jobId
-         |"""
-      .stripMargin
-      .update
-      .run
+         |""".stripMargin.update.run
       .transact(xa)
 }
 
 object JobsRepository {
-  def make[F[_] : MonadCancelThrow: Logger](xa: Transactor[F]): F[JobsRepositoryAlg[F]] = JobsRepository[F](xa).pure[F]
+  def make[F[_]: MonadCancelThrow: Logger](xa: Transactor[F]): F[JobsRepositoryAlg[F]] =
+    JobsRepository[F](xa).pure[F]
 }

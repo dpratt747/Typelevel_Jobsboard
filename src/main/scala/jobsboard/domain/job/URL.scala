@@ -23,9 +23,8 @@ object URL {
   given Decoder[URL] = Decoder[String].emap { str =>
     Either.catchNonFatal(apply(str)).leftMap(_.getMessage)
   }
-  
+
   given urlGet: Get[URL] = Get[String].tmap(apply)
 
   given urlPut: Put[URL] = Put[String].tcontramap(_.value)
 }
-

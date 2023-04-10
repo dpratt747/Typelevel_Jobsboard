@@ -6,9 +6,10 @@ lazy val root = (project in file("."))
   .settings(
     organization := Versions.organization,
     scalaVersion := Versions.scala3Version,
-    name := "typelevel-jobboard",
+    name := "typelevel-jobsboard",
     idePackagePrefix.withRank(KeyRanks.Invisible) := Some("com.github.dpratt747"),
     libraryDependencies := Dependencies.all,
+    scalafmtOnCompile := true,
     IntegrationTest / testForkedParallel := true,
     IntegrationTest / dependencyClasspath := (IntegrationTest / dependencyClasspath).value
       ++ (Test / exportedProducts).value

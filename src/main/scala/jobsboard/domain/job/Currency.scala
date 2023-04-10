@@ -8,7 +8,8 @@ import io.github.iltotore.iron.{*, given}
 import doobie.*
 
 object Currency {
-  private type NotEmptyAndBlank = (Not[Empty] & Not[Blank]) DescribedAs "Currency must not be empty or blank"
+  private type NotEmptyAndBlank =
+    (Not[Empty] & Not[Blank]) DescribedAs "Currency must not be empty or blank"
   opaque type Currency = String :| NotEmptyAndBlank
 
   @throws[IllegalArgumentException]
@@ -26,4 +27,3 @@ object Currency {
 
   given Put[Currency] = Put[String].tcontramap(_.value)
 }
-

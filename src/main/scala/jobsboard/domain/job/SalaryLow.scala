@@ -26,4 +26,3 @@ object SalaryLow {
 
   given Put[SalaryLow] = Put[Int].tcontramap(_.value)
 }
-
