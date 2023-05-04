@@ -82,6 +82,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -125,6 +133,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -169,6 +185,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -218,6 +242,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -261,6 +293,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -302,6 +342,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -346,6 +394,14 @@ class AuthRoutesSpec
             none[User].asRight[String].pure[IO]
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
         (for {
           jwtToken   <- mockedAuthenticator.create(user.email)
@@ -390,6 +446,14 @@ class AuthRoutesSpec
             Left("Password mismatch, unable to update password").pure[IO]
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
         (for {
           jwtToken   <- mockedAuthenticator.create(user.email)
@@ -433,6 +497,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -478,6 +550,14 @@ class AuthRoutesSpec
               user.some.asRight[String].pure[IO]
 
             override def deleteUser(email: Email): IO[Boolean] = ???
+
+            override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+            override def recoverPasswordFromToken(
+                email: Email,
+                token: String,
+                newPassword: Password
+            ): IO[Boolean] = ???
           }
 
           (for {
@@ -525,6 +605,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = ???
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {
@@ -571,6 +659,14 @@ class AuthRoutesSpec
           ): IO[Either[String, Option[User]]] = ???
 
           override def deleteUser(email: Email): IO[Boolean] = true.pure[IO]
+
+          override def sendPasswordRecoveryToken(email: Email): IO[Unit] = ???
+
+          override def recoverPasswordFromToken(
+              email: Email,
+              token: String,
+              newPassword: Password
+          ): IO[Boolean] = ???
         }
 
         (for {

@@ -17,7 +17,7 @@ trait HealthRoutesAlg[F[_]] {
 final case class HealthRoutes[F[_]: Concurrent: Logger] private ()
     extends HealthRoutesAlg[F]
     with Http4sDsl[F] {
-  private def healthRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
+  private val healthRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
     Logger[F].info("Health check") *>
       Ok("Ok")
   }

@@ -26,7 +26,7 @@ CREATE TABLE jobs (
 ALTER TABLE jobs ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
 
 CREATE TABLE users (
-    email TEXT NOT NULL,
+    email TEXT PRIMARY KEY,
     hashed_password TEXT NOT NULL,
     first_name TEXT,
     last_name TEXT,
@@ -34,4 +34,8 @@ CREATE TABLE users (
     role TEXT NOT NULL
 );
 
-ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (email);
+CREATE TABLE recovery_tokens (
+    email TEXT PRIMARY KEY,
+    token TEXT NOT NULL,
+    expiration BIGINT NOT NULL
+);

@@ -2,8 +2,8 @@ package com.github.dpratt747
 package jobsboard
 
 import jobsboard.config.*
-import jobsboard.core.program.{AuthProgram, JobsProgram}
-import jobsboard.core.repository.{JobsRepository, UsersRepository}
+import jobsboard.core.program.*
+import jobsboard.core.repository.*
 import jobsboard.domain.job.Email.Email
 import jobsboard.domain.security.Authenticator
 import jobsboard.domain.user.User
@@ -43,12 +43,20 @@ object Application extends IOApp.Simple {
   override def run: IO[Unit] =
     transactorWithConfig.use { (xa, config) =>
       for {
-        jobsRepo    <- JobsRepository.make[IO](xa)
-        jobsProgram <- JobsProgram.make[IO](jobsRepo)
-        userRepo    <- UsersRepository.make[IO](xa)
-        authProgram <- AuthProgram.make[IO](userRepo, config)
-        httpApp     <- HttpApi.make[IO](jobsProgram, authProgram, authProgram.authenticator)
-        routes      <- httpApp.routes
+        jobsRepo: JobsRepositoryAlg[IO]   <- JobsRepository.make[IO](xa)
+        usersRepo: UsersRepositoryAlg[IO] <- UsersRepository.make[IO](xa)
+        tokensRepo: TokensRepositoryAlg[IO] <- TokensRepository
+          .make[IO](xa, usersRepo, config.tokenConfig)
+
+        jobsProgram: JobsProgramAlg[IO]    <- JobsProgram.make[IO](jobsRepo)
+        tokenProgram: TokensProgramAlg[IO] <- TokensProgram.make[IO](tokensRepo)
+        userProgram: UsersProgramAlg[IO]   <- UsersProgram.make[IO](usersRepo)
+        emailProgram: EmailsProgramAlg[IO] <- EmailsProgram.make[IO](config.emailServiceConfig)
+        authProgram: AuthProgramAlg[IO] <- AuthProgram
+          .make[IO](userProgram, tokenProgram, emailProgram, config)
+
+        httpApp <- HttpApi.make[IO](jobsProgram, authProgram, authProgram.authenticator)
+        routes  <- httpApp.routes
         server <- EmberServerBuilder
           .default[IO]
           .withHost(config.emberConfig.host)

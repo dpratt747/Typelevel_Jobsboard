@@ -11,7 +11,7 @@ trait DoobieSpec {
 
   val initScript: String
 
-  def postgresResource: Resource[IO, PostgreSQLContainer[Nothing]] = {
+  private def postgresResource: Resource[IO, PostgreSQLContainer[Nothing]] = {
     val acquire = {
       val container: PostgreSQLContainer[Nothing] = new PostgreSQLContainer("postgres")
         .withInitScript(initScript)

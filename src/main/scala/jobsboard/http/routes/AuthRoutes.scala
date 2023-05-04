@@ -2,7 +2,7 @@ package com.github.dpratt747
 package jobsboard.http.routes
 
 import jobsboard.core.program.{AuthProgramAlg, JobsProgram, JobsProgramAlg}
-import jobsboard.domain.auth.{LoginInfo, NewPasswordInfo}
+import jobsboard.domain.auth.{ForgotPasswordInfo, LoginInfo, NewPasswordInfo, RecoverPasswordInfo}
 import jobsboard.domain.job.*
 import jobsboard.domain.job.Email.Email
 import jobsboard.domain.job.JobId.*
@@ -42,7 +42,7 @@ final case class AuthRoutes[F[_]: Concurrent: Logger] private (
   private val securedRequestHandler = SecuredRequestHandler(authenticator)
 
   // Post /auth/login
-  private def loginRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "login" =>
+  private val loginRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "login" =>
     val jwtTokenO: F[Option[AugmentedJWT[Crypto, Email]]] = for {
       loginRequest <- req.as[LoginInfo]
       token        <- authProgram.login(loginRequest.email, loginRequest.password)
@@ -55,7 +55,7 @@ final case class AuthRoutes[F[_]: Concurrent: Logger] private (
   }
 
   // POST /auth/users
-  private def createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+  private val createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "user" =>
       for {
         newUser <- req.as[NewUserInfo]
@@ -70,7 +70,7 @@ final case class AuthRoutes[F[_]: Concurrent: Logger] private (
   }
 
   // PUT /auth/users/password
-  private def changePasswordRoute: AuthRoute[F] = {
+  private val changePasswordRoute: AuthRoute[F] = {
     case req @ PUT -> Root / "user" / "password" asAuthed user =>
       for {
         newPasswordInfo  <- req.request.as[NewPasswordInfo]
@@ -85,7 +85,7 @@ final case class AuthRoutes[F[_]: Concurrent: Logger] private (
   }
 
   // POST /auth/logout
-  private def logoutRoute: AuthRoute[F] = { case req @ POST -> Root / "logout" asAuthed _ =>
+  private val logoutRoute: AuthRoute[F] = { case req @ POST -> Root / "logout" asAuthed _ =>
     Ok("TODO")
     val token = req.authenticator
     for {
@@ -94,12 +94,35 @@ final case class AuthRoutes[F[_]: Concurrent: Logger] private (
     } yield resp
   }
 
-  private def deleteUserRoute: AuthRoute[F] = {
+  private val deleteUserRoute: AuthRoute[F] = {
     case DELETE -> Root / "user" / Email(email) asAuthed user =>
       authProgram.deleteUser(email).flatMap {
         case true  => Ok()
         case false => NotFound(FailureResponse(s"User with email ($email) not deleted."))
       }
+  }
+
+  private val resetPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ POST -> Root / "reset" =>
+      for {
+        fpInfo <- req.as[ForgotPasswordInfo]
+        _      <- authProgram.sendPasswordRecoveryToken(fpInfo.email)
+        resp   <- Ok()
+      } yield resp
+  }
+
+  private val recoverPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ POST -> Root / "recover" =>
+      for {
+        rpInfo <- req.as[RecoverPasswordInfo]
+        recovery <- authProgram.recoverPasswordFromToken(
+          rpInfo.email,
+          rpInfo.token,
+          rpInfo.newPassword
+        )
+        resp <-
+          if (recovery) Ok() else Forbidden(FailureResponse("Email/token combination invalid."))
+      } yield resp
   }
 
   private val authedRoutes = securedRequestHandler.liftService(
@@ -108,7 +131,8 @@ final case class AuthRoutes[F[_]: Concurrent: Logger] private (
       deleteUserRoute.restrictedTo(adminOnly)
   )
 
-  private val unauthorizedRoutes: HttpRoutes[F] = loginRoute <+> createUserRoute
+  private val unauthorizedRoutes: HttpRoutes[F] =
+    loginRoute <+> createUserRoute <+> resetPasswordRoute <+> recoverPasswordRoute
 
   override def routes: HttpRoutes[F] = Router(
     "/auth" -> (unauthorizedRoutes <+> authedRoutes)

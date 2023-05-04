@@ -1,10 +1,11 @@
 object Versions {
   lazy val organization = "com.github.dpratt747"
+
   lazy val scala3Version = "3.2.2"
   lazy val circeVersion = "0.14.0"
   lazy val catsEffectVersion = "3.4.8"
   lazy val http4sVersion = "0.23.18"
-  lazy val ironVersion = "2.0.0"
+  lazy val ironVersion = "2.1.0"
   lazy val doobieVersion = "1.0.0-RC1"
   lazy val pureConfigVersion = "0.17.2"
   lazy val log4catsVersion = "2.5.0"

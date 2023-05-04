@@ -27,6 +27,11 @@ trait JobGenerators {
     chars <- Gen.listOfN(n, Gen.asciiPrintableChar)
   } yield chars.mkString
 
+  def stringBoundedGen(min: Int, max: Int): Gen[String] = for {
+    n     <- Gen.chooseNum(min, max)
+    chars <- Gen.listOfN(n, Gen.alphaChar)
+  } yield chars.mkString
+
   val companyNameGen: Gen[CompanyName] = nonEmptyStringGen.map(CompanyName(_))
 
   val titleGen: Gen[Title] = nonEmptyStringGen.map(Title(_))
@@ -76,7 +81,10 @@ trait JobGenerators {
 
   val otherGen: Gen[Other] = nonEmptyStringGen.map(Other(_))
 
-  val emailGen: Gen[Email] = Gen.oneOf(Seq(Email("somemail@mail.com"), Email("live@mail.com")))
+  val emailGen: Gen[Email] = stringBoundedGen(5, 10).map(str =>
+    val emailString = s"$str@mail.com".toLowerCase()
+    Email(emailString)
+  )
 
   val jobInfoGen: Gen[JobInfo] =
     for {
